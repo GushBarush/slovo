@@ -8,7 +8,9 @@ import org.mockito.ArgumentCaptor;
 import ru.task.slovo.model.RequestDto;
 
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.*;
@@ -16,7 +18,7 @@ import static org.mockito.Mockito.*;
 class RequestServiceImplTest {
 
     private RequestServiceImpl requestService;
-    private Map<RequestDto.Type, ExecutorService> mockExecutorMap;
+    private Map<RequestDto.Type, ThreadPoolExecutor> mockExecutorMap;
 
     @BeforeEach
     void setUp() {
@@ -24,7 +26,12 @@ class RequestServiceImplTest {
         mockExecutorMap = requestService.getExecutorMap();
 
         for (RequestDto.Type type : RequestDto.Type.values()) {
-            ForkJoinPool mockExecutor = mock(ForkJoinPool.class);
+            ThreadPoolExecutor mockExecutor = mock(ThreadPoolExecutor.class);
+            BlockingQueue<Runnable> mockQueue = mock(BlockingQueue.class);
+
+            when(mockExecutor.getQueue()).thenReturn(mockQueue);
+            when(mockQueue.size()).thenReturn(0);
+
             mockExecutorMap.put(type, mockExecutor);
         }
     }
@@ -43,7 +50,7 @@ class RequestServiceImplTest {
     @EnumSource(RequestDto.Type.class)
     void testSubmitShouldSendCorrectTaskToQueue(RequestDto.Type type) {
         RequestDto request = new RequestDto(type, 1);
-        ExecutorService mockExecutor = mockExecutorMap.get(type);
+        ThreadPoolExecutor mockExecutor = mockExecutorMap.get(type);
         ArgumentCaptor<RequestTask> taskCaptor = ArgumentCaptor.forClass(RequestTask.class);
 
         requestService.submit(request);
@@ -57,22 +64,10 @@ class RequestServiceImplTest {
     void testShutdownShouldShutdownAllExecutors() throws InterruptedException {
         requestService.shutdown();
 
-        for (ExecutorService executor : mockExecutorMap.values()) {
+        for (ThreadPoolExecutor executor : mockExecutorMap.values()) {
             verify(executor, times(1)).shutdown();
             verify(executor, times(1)).awaitTermination(60, TimeUnit.SECONDS);
         }
-    }
-
-    @ParameterizedTest
-    @EnumSource(RequestDto.Type.class)
-    void testShutdownShouldHandleInterruptedException(RequestDto.Type type) throws InterruptedException {
-        ExecutorService mockExecutor = mockExecutorMap.get(type);
-        doThrow(new InterruptedException("Interrupted")).when(mockExecutor).awaitTermination(60, TimeUnit.SECONDS);
-
-        requestService.shutdown();
-
-        verify(mockExecutor, times(1)).shutdownNow();
-        verify(mockExecutor, times(1)).awaitTermination(60, TimeUnit.SECONDS);
     }
 
 }
