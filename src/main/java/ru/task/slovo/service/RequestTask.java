@@ -9,7 +9,7 @@ import ru.task.slovo.util.ReentrantCountedLock;
 public class RequestTask implements Runnable {
 
     private final LockManager lockManager;
-    private final Logger logger = LogManager.getLogger();
+    private final Logger logger = LogManager.getLogger(RequestTask.class);
     private final RequestDto request;
 
     public RequestTask(RequestDto request, LockManager lockManager) {

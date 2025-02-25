@@ -7,7 +7,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CommandManager {
-    private final Logger logger = LogManager.getLogger();
+    private final Logger logger = LogManager.getLogger(CommandManager.class);
     private final Map<String, Command> commands = new HashMap<>();
 
     public void registerCommand(String name, Command command) {

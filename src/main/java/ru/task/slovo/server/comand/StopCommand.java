@@ -5,7 +5,7 @@ import org.apache.logging.log4j.Logger;
 import ru.task.slovo.server.AppServer;
 
 public class StopCommand implements Command {
-    private final Logger logger = LogManager.getLogger();
+    private final Logger logger = LogManager.getLogger(StartCommand.class);
     private final AppServer server;
 
     public StopCommand(AppServer server) {

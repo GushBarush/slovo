@@ -13,7 +13,7 @@ import java.util.concurrent.TimeUnit;
 
 public class RequestServiceImpl implements RequestService {
 
-    private final Logger logger = LogManager.getLogger();
+    private final Logger logger = LogManager.getLogger(RequestServiceImpl.class);
     private final Map<RequestDto.Type, ThreadPoolExecutor> executorMap;
     public final LockManager lockManager;
 

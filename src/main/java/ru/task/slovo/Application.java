@@ -13,7 +13,7 @@ import java.io.InputStreamReader;
 
 public class Application {
 
-    private static final Logger LOGGER = LogManager.getLogger();
+    private static final Logger LOGGER = LogManager.getLogger(Application.class);
 
     private static final int PORT = 7777;
     private static final String START_COMMAND = "start";

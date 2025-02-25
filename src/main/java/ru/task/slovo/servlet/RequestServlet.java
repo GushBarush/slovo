@@ -17,7 +17,7 @@ import java.io.IOException;
 @WebServlet("/request")
 public class RequestServlet extends HttpServlet {
 
-    private final Logger logger = LogManager.getLogger();
+    private final Logger logger = LogManager.getLogger(RequestServlet.class);
 
     private final RequestService requestService;
     private final Gson gson = new Gson();
