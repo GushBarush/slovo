@@ -8,17 +8,19 @@ import ru.task.slovo.util.ReentrantCountedLock;
 
 public class RequestTask implements Runnable {
 
+    private final LockManager lockManager;
     private final Logger logger = LogManager.getLogger();
     private final RequestDto request;
 
-    public RequestTask(RequestDto request) {
+    public RequestTask(RequestDto request, LockManager lockManager) {
         this.request = request;
+        this.lockManager = lockManager;
     }
 
     @Override
     public void run() {
         int key = request.getX();
-        ReentrantCountedLock countedLock = LockManager.acquireLock(key);
+        ReentrantCountedLock countedLock = lockManager.acquireLock(key);
         countedLock.lock();
         try {
             logger.info("Начало обработки запроса {} с X = {} в потоке {}",
@@ -30,9 +32,14 @@ public class RequestTask implements Runnable {
                     request.getType(), key, Thread.currentThread().getName());
         } catch (InterruptedException e) {
             logger.error(e.getMessage());
+            Thread.currentThread().interrupt();
         } finally {
             countedLock.unlock();
-            LockManager.releaseLock(key, countedLock);
+            lockManager.releaseLock(key, countedLock);
         }
+    }
+
+    RequestDto getRequest() {
+        return request;
     }
 }

@@ -20,4 +20,8 @@ public class ReentrantCountedLock extends ReentrantLock{
     public int decrement() {
         return count.decrementAndGet();
     }
+
+    public int getCount() {
+        return count.get();
+    }
 }
