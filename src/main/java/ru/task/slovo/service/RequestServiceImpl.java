@@ -7,14 +7,12 @@ import ru.task.slovo.util.LockManager;
 
 import java.util.EnumMap;
 import java.util.Map;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class RequestServiceImpl implements RequestService {
 
     private final Logger logger = LogManager.getLogger(RequestServiceImpl.class);
-    private final Map<RequestDto.Type, ThreadPoolExecutor> executorMap;
+    private final Map<RequestDto.Type, ExecutorService> executorMap;
     public final LockManager lockManager;
 
     public RequestServiceImpl() {
@@ -22,21 +20,15 @@ public class RequestServiceImpl implements RequestService {
         executorMap = new EnumMap<>(RequestDto.Type.class);
 
         for (RequestDto.Type type : RequestDto.Type.values()) {
-            executorMap.put(type, new ThreadPoolExecutor(5, 5, 0L,
-                    TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>()));
+            executorMap.put(type, ForkJoinPool.commonPool());
         }
     }
 
     @Override
     public void submit(RequestDto request) {
-        logQueueStates();
         RequestTask task = new RequestTask(request, lockManager);
-        ThreadPoolExecutor executor = executorMap.get(request.getType());
+        ExecutorService executor = executorMap.get(request.getType());
         executor.submit(task);
-    }
-
-    private void logQueueStates() {
-        executorMap.forEach((type, executor) -> logger.info("Состояние очереди для типа {}: {}", type, executor.getQueue().size()));
     }
 
     @Override
@@ -51,11 +43,12 @@ public class RequestServiceImpl implements RequestService {
             } catch (InterruptedException e) {
                 logger.error("Ошибка при завершении ExecutorService для типа {}: {}", type, e.getMessage());
                 executor.shutdownNow();
+                Thread.currentThread().interrupt();
             }
         });
     }
 
-    Map<RequestDto.Type, ThreadPoolExecutor> getExecutorMap() {
+    Map<RequestDto.Type, ExecutorService> getExecutorMap() {
         return executorMap;
     }
 }
